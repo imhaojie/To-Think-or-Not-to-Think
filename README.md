@@ -10,7 +10,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C.svg?logo=pytorch&logoColor=white)](#installation)
 [![Task](https://img.shields.io/badge/Task-Ref--AVS-2E8B57.svg)](#overview)
 [![Benchmark](https://img.shields.io/badge/Benchmark-RefAVSBench%20%7C%20R²--AVSBench-8A2BE2.svg)](#results)
-[![Code](https://img.shields.io/badge/Code-Released-1f6feb.svg)](https://github.com/Jackey0903/To-Think-or-Not-to-Think)
+[![Code](https://img.shields.io/badge/Code-Released-1f6feb.svg)](https://github.com/imhaojie/To-Think-or-Not-to-Think)
 [![Weights](https://img.shields.io/badge/Weights-Links%20Provided-f59e0b.svg)](#model-zoo)
 [![Paper](https://img.shields.io/badge/Paper-NeurIPS%202026-6f42c1.svg)](https://neurips.cc/virtual/2026/poster/148558)
 
@@ -92,7 +92,7 @@ Large datasets, model weights, generated masks, logs, and third-party source tre
 ## Installation
 
 ```bash
-git clone https://github.com/Jackey0903/To-Think-or-Not-to-Think.git
+git clone https://github.com/imhaojie/To-Think-or-Not-to-Think.git
 cd To-Think-or-Not-to-Think
 ```
 
