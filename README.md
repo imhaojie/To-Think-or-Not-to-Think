@@ -10,15 +10,9 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C.svg?logo=pytorch&logoColor=white)](#installation)
 [![Task](https://img.shields.io/badge/Task-Ref--AVS-2E8B57.svg)](#overview)
 [![Benchmark](https://img.shields.io/badge/Benchmark-RefAVSBench%20%7C%20R²--AVSBench-8A2BE2.svg)](#results)
-[![Code](https://img.shields.io/badge/Code-Released-1f6feb.svg)](https://github.com/imhaojie/To-Think-or-Not-to-Think)
-[![Weights](https://img.shields.io/badge/Weights-Links%20Provided-f59e0b.svg)](#model-zoo)
 [![Paper](https://img.shields.io/badge/Paper-NeurIPS%202026-6f42c1.svg)](https://neurips.cc/virtual/2026/poster/148558)
 
 **Accepted to the Annual Conference on Neural Information Processing Systems (NeurIPS 2026).**
-
-**arXiv: coming soon.**
-
-**The model already knows whether it needs to think — before it generates a single reasoning token.**
 
 </div>
 
@@ -26,24 +20,11 @@
   <img src="assets/teaser.png" width="94%" alt="Pre-decisional reasoning budgets for Ref-AVS">
 </p>
 
-<p align="center">
-<em><b>(a)</b> The conventional always-long pipeline sends every query through a full chain of thought.
-<b>(b)</b> A text-router baseline predicts the budget from text features alone, never seeing the integrated multimodal state.
-<b>(c)</b> Ours reads the frozen <b>generation-onset state</b> <code>h_onset</code> — captured before the first reasoning token — and routes each sample to <span><b>Zero</b></span>, <span><b>Short</b></span>, or <span><b>Long</b></span> reasoning.</em>
-</p>
-
 ## Overview
 
-Multimodal reasoning systems increasingly assume that longer chain-of-thought uniformly improves downstream grounding. **In referring audio-visual segmentation, that assumption fails.**
+Long reasoning chains can help resolve ambiguous audio-visual references, but they can also introduce errors when the target is already clear. This work selects a reasoning budget for each input before decoding begins.
 
-- A speaker clearly visible against a wall, a single instrument in frame — the visual evidence is already unambiguous. Forcing a long reasoning chain creates what we call the **overthinking trap**: the model over-analyzes, drifts toward hallucinated linguistic priors, and produces a *worse* mask.
-- Genuinely ambiguous references — *which* of several instruments plays longest — still benefit from multi-step reasoning.
-
-So the value of reasoning is not a property of the model but of the **input–model interaction**. This raises the question the paper is built around:
-
-> *Can the model itself tell us how much to think, before it begins thinking?*
-
-We look inside the model at the **generation-onset representation** `h_onset` — the final-layer state at the last input token, after all video, audio, and text evidence has been integrated but **before any reasoning token is generated**. This state is *pre-decisional*: it contains no generated reasoning content, yet it turns out to encode whether reasoning will help. We call this the **Pre-Decisional Budget Signal (PDBS)**.
+A lightweight controller uses the **generation-onset representation** `h_onset` to choose **Zero**, **Short**, or **Long** reasoning. This final-layer state comes from the last input token, after the model integrates video, audio, and text and before it generates any reasoning tokens. We call the budget information in this state the **Pre-Decisional Budget Signal (PDBS)**.
 
 ## Method
 
@@ -51,13 +32,9 @@ We look inside the model at the **generation-onset representation** `h_onset` �
   <img src="assets/pipeline.jpg" width="97%" alt="Pipeline of pre-decisional budget routing">
 </p>
 
-<p align="center">
-<em><b>(1)</b> Frozen encoders extract multimodal features. <b>(2)</b> A frozen Ref-AVS MLLM integrates them into the onset state <code>h_onset</code>, strictly before autoregressive decoding.
-<b>(3)</b> A lightweight controller reads that state and assigns a Zero / Short / Long budget. <b>(4)</b> The routed query drives GroundingDINO. <b>(5)</b> Boxes prompt SAM2 for the final masks.
-Snowflakes denote frozen components — the controller is the sole trainable module.</em>
-</p>
+Frozen encoders and the Ref-AVS MLLM produce `h_onset`. The controller selects a budget, and the resulting query passes through GroundingDINO and SAM2 to produce segmentation masks. Only the controller is trained.
 
-Three discrete budgets act as controlled counterfactual interventions, all feeding the *same* frozen detector and segmenter:
+The three budgets use the same frozen detector and segmenter:
 
 | Budget | Grounding phrase supplied to the perception engine |
 | --- | --- |
@@ -65,11 +42,11 @@ Three discrete budgets act as controlled counterfactual interventions, all feedi
 | **Short** | A compact object-aware description after one reasoning step. |
 | **Long** | The full TGS-style multimodal CoT before the final descriptive phrase. |
 
-Because the onset state is already computed during standard inference, routing adds **near-zero latency and no extra forward pass**.
+The controller reuses the onset state from standard inference, so budget routing requires no additional MLLM forward pass.
 
 ## Results
 
-Quantitative results, probing analyses, and qualitative comparisons are reported in the paper and will be added here once it is public.
+Result tables, probing analyses, and qualitative comparisons will be added with the public paper.
 
 ## Repository Structure
 
@@ -87,7 +64,7 @@ Quantitative results, probing analyses, and qualitative comparisons are reported
 | `docs/` | Installation, data, checkpoint, and reproduction guides. |
 | `assets/` | Figures used in this README. |
 
-Large datasets, model weights, generated masks, logs, and third-party source trees are intentionally excluded from Git. All required download links and expected local paths are documented below.
+Download data and model weights separately using the links below.
 
 ## Installation
 
@@ -228,25 +205,13 @@ More commands in [docs/REPRODUCE.md](docs/REPRODUCE.md).
 
 ## Reproducibility Notes
 
-- All scripts use repository-relative paths by default.
-- Machine-specific paths can be overridden through `TGS_*` environment variables or CLI arguments.
-- Heavy resources are ignored by `.gitignore` and should be placed locally.
-- `scripts/check_smoke.py --strict` is the recommended pre-flight check on a new machine.
+- Override default paths with `TGS_*` environment variables or CLI arguments.
 - All splits use seed 42.
 - The legacy scripts in `ground_segment_scripts/` are kept for compatibility; the preferred public entrypoint is `scripts/budget/infer_budget.py`.
 
-## TODO
-
-- [x] Core model code, metadata CSVs, budget scripts, reproduction helpers
-- [x] Installation, data, checkpoint, and smoke-check documentation
-- [ ] Quantitative results, probing analyses, and qualitative comparisons
-- [ ] Released result tables for the final checkpoint hosting layout
-- [x] NeurIPS 2026 conference page
-- [ ] arXiv preprint and final BibTeX
-
 ## Citation
 
-The paper was accepted to the **Annual Conference on Neural Information Processing Systems (NeurIPS 2026)**. The arXiv preprint and final BibTeX are coming soon; please use the [official conference entry](https://neurips.cc/virtual/2026/poster/148558) for now.
+The paper is listed on the [NeurIPS 2026 conference page](https://neurips.cc/virtual/2026/poster/148558). The arXiv preprint and final BibTeX will be added when available.
 
 ## Acknowledgements
 
